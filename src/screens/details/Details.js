@@ -1,103 +1,80 @@
-import React, {useEffect, useState} from 'react';
-import './Details.css';
-import {Button, GridList, GridListTile, GridListTileBar, Typography} from "@material-ui/core";
-import {Link} from "react-router-dom";
-import {useGlobals} from "../../common/store";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import YouTube from "react-youtube";
-import StarBorderIcon from "@material-ui/icons/StarBorder";
-import Header from "../../common/header/Header";
+import React from "react";
+import "./Details.css";
+import "../../common/header/Header";
+import Header from "../../common/header/Header.js";
+import { Typography, GridList, GridListTileBar, GridListTile } from "@material-ui/core";
+import { Link, useLocation } from "react-router-dom";
+import Trailer from "./detailsComponents/Trailer";
+import StarBorderIcon from '@mui/icons-material/StarBorderOutlined';
+
+function starHandler(e) {
+  var clickedId = (e.target.id).slice(1)
+  for (var i = 1; i <= clickedId; i++) {
+    document.getElementById(("s").concat("", i)).style.color = "yellow";
+  }
+  for (var x = 5; x > clickedId; x--) {
+    document.getElementById(("s").concat("", x)).style.color = "black";
+  }
+}
 
 
 function Details() {
 
-    const {baseUrl} = useGlobals();
-    const [movie, setMovie] = useState({});
-    const [rating, setRating] = useState(0);
-    const [isMovieFetched, setIsMovieFetched] = useState(false);
-    useEffect(() => {
-        const getMovieDetails = async () => {
-            const response = await fetch(`${baseUrl}/movies/${window.location.pathname.split("/").pop()}`);
-            const movieJson = await response.json();
-            setMovie(movieJson);
-            setIsMovieFetched(true);
-        }
-        getMovieDetails();
-    }, [])
-
-    return (
-        <div>
-            <Header baseUrl={window.location.pathname}/>
-            {isMovieFetched ? (
-                    <div className={'details'}>
-                        <div className={'backHome'}>
-                            <Button component={Link} to={`/`}> {'<'} Back to Home</Button>
-                        </div>
-                        <div className={'detailsSection'}>
-                            <div className={'detailsPoster'}>
-                                <div className={'poster'}>
-                                    <img src={movie.poster_url} alt={`poster${movie.title}`}/>
-                                </div>
-                            </div>
-                            <div className={'detailsContent'}>
-                                <Typography variant={'h2'}>{movie.title}</Typography>
-                                <Typography><b>Genre: </b>{movie.genres.join(',')}</Typography>
-                                <Typography><b>Duration: </b>{movie.duration}</Typography>
-                                <Typography><b>Release Date: </b>{new Date(movie.release_date).toDateString()}</Typography>
-                                <Typography><b>Rating: </b>{movie.rating}</Typography>
-                                <Typography style={{marginTop: '16px'}}><b>Plot:</b> <a href={`${movie.wiki_url}`}>(Wiki
-                                    Link)</a>{movie.storyline}
-                                </Typography>
-                                <Typography style={{marginTop: '16px'}}><b>Trailer:</b></Typography>
-                                <YouTube opts={{width: '100%'}}
-                                         videoId={`${movie.trailer_url.split("v=")[1].split("&")[0]}`}/>
-                            </div>
-                            <div className={'detailsCasts'}>
-                                <Typography><b>Rate this movie: </b></Typography>
-                                <div>
-                                    <StarBorderIcon style={{color: rating >= 1 ? "yellow" : "black", cursor: "pointer"}}
-                                                    onClick={() => {
-                                                        setRating(1)
-                                                    }}/>
-                                    <StarBorderIcon style={{color: rating >= 2 ? "yellow" : "black", cursor: "pointer"}}
-                                                    onClick={() => {
-                                                        setRating(2)
-                                                    }}/>
-                                    <StarBorderIcon style={{color: rating >= 3 ? "yellow" : "black", cursor: "pointer"}}
-                                                    onClick={() => {
-                                                        setRating(3)
-                                                    }}/>
-                                    <StarBorderIcon style={{color: rating >= 4 ? "yellow" : "black", cursor: "pointer"}}
-                                                    onClick={() => {
-                                                        setRating(4)
-                                                    }}/>
-                                    <StarBorderIcon style={{color: rating >= 5 ? "yellow" : "black", cursor: "pointer"}}
-                                                    onClick={() => {
-                                                        setRating(5);
-                                                    }}/>
-                                </div>
-                                <Typography style={{marginTop: '16px'}}><b>Artists: </b></Typography>
-                                <GridList cols={2}>
-                                    {movie.artists.map((item) => (
-                                            <GridListTile key={item.profile_url}>
-                                                <img src={item.profile_url} alt={item.first_name + ' ' + item.last_name}/>
-                                                <GridListTileBar
-                                                    title={item.first_name + ' ' + item.last_name}
-                                                />
-                                            </GridListTile>
-                                        )
-                                    )}
-                                </GridList>
-                            </div>
-
-                        </div>
-
-                    </div>
-                )
-                : <CircularProgress color={'secondary'}/>}
+  const location = useLocation();
+  const data = location.state.movie;
+  console.log(data);
+  return (
+    <div className="mainContainer">
+      <Header showBookShowButton="true" id={data.id} />
+      <div className="backbtn">
+        <Link to="/">
+          <Typography>{"<"} Back to Home</Typography>
+        </Link>
+      </div>
+      <div className="flex-container">
+        <div className="leftDetail">
+          <img className="poster" alt="poster" src={data.poster_url}></img>
         </div>
+        <div className="middleDetail">
+          <Typography component="h2">{data.title}</Typography>
+          <Typography><strong>Genres: </strong>{data.genres.toString()}</Typography>
+          <Typography><strong>Duration: </strong>{data.duration}</Typography>
+          <Typography><strong>Release Date: </strong>{new Date(data.release_date).toDateString()}</Typography>
+          <Typography><strong>Rating: </strong>{data.critics_rating}</Typography>
+          <div className="sixteenMargin">
+            <Typography ><strong>Plot: </strong><a href={data.wiki_url}>(Wiki Link)</a>{" " + data.storyline}</Typography>
+          </div>
+          <div className="sixteenMargin">
+            <Typography><strong>Trailer: </strong></Typography>
+            <Trailer id={data.trailer_url.slice(32)}></Trailer>
+          </div>
+        </div>
+        <div className="rightDetail">
+          <Typography><strong>Rate this movie: </strong><br />
+            <StarBorderIcon onClick={starHandler} id="s1" />
+            <StarBorderIcon onClick={starHandler} id="s2" />
+            <StarBorderIcon onClick={starHandler} id="s3" />
+            <StarBorderIcon onClick={starHandler} id="s4" />
+            <StarBorderIcon onClick={starHandler} id="s5" />
+          </Typography>
+          <Typography className="sixteenMargin"><strong>Artists:  </strong></Typography>
 
-    )
+          <GridList cols={2} >
+            {data.artists.map((item) => (
+              <GridListTile key={item.id}>
+                <img alt={item.id} src={item.profile_url}></img>
+                <GridListTileBar title={item.first_name + " " + item.last_name}></GridListTileBar>
+              </GridListTile>
+
+            ))}
+          </GridList>
+
+
+
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default Details;
