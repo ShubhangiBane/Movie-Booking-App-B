@@ -1,49 +1,86 @@
-import React, {useEffect, useState} from 'react';
-import SingleLineGridList from '../home/GridList/GridList';
-import MovieReleases from '../home/MovieReleases/MovieReleases';
-import MovieReleasesProvider from '../home/Store';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import './Home.css';
-import Header from "../../common/header/Header";
+import React, { useState } from "react";
+import "./Home.css";
+import "../../common/header/Header";
+import Header from "../../common/header/Header.js";
+import UpcomingMoviesList from "./homeComponents/UpcomingMoviesList";
+import moviesData from "../../assets/moviesData";
+import ReleasedMoviesList from "./homeComponents/ReleasedMoviesList";
+import FormCard, { userSelection } from "./homeComponents/FormCard";
+import genres from "../../assets/genre";
+import artists from "../../assets/artists";
+
+function Home(){
+
+  const [state, setState] = useState({
+                                      data: moviesData,
+                                      genres: genres,
+                                      artists: artists,
+                                      userSelection: moviesData,
+                                    })
+  
+    
 
 
-function Home() {
+  const filterHandler = () => {
+    if (
+      userSelection.name === "" &&
+      userSelection.releaseDateEnd === "" &&
+      userSelection.releaseDateStart === "" &&
+      userSelection.genres.length === 0 &&
+      userSelection.artists.length === 0
+    ) {
+      const currentState = {...state};
+      currentState.userSelection = moviesData;
+      setState(currentState);
+      return moviesData;
+    }
 
-
-    const [startMovies, setstartMovies] = useState([])
-
-    useEffect(() => {
-        const fetchMovie = async () => {
-            const response = await fetch("/api/v1/movies?page=1&limit=6")
-            const json = await response.json();
-            let value = [];
-            console.log(json.movies)
-            if (json.movies) {
-                json.movies.forEach(item => {
-                    value.push({title: item.title, img: item.poster_url})
-                });
-            }
-            setstartMovies([...value]);
+    else {
+      const filteredMovies = state.data.filter((movie) => {
+        if (
+          movie.title.toLowerCase() === userSelection.name.toLowerCase() ||
+          movie.genres.some((genre) => userSelection.genres.includes(genre)) || parseInt(new Date(movie.release_date).getTime()) <= parseInt(new Date(userSelection.releaseDateEnd).getTime()) ||
+          parseInt(new Date(movie.release_date).getTime()) >= parseInt(new Date(userSelection.releaseDateStart).getTime()) || movie.artists.some((artist) =>
+            userSelection.artists.includes(
+              `${artist.first_name} ${artist.last_name}`
+            )
+          )
+        ) {
+          console.log(userSelection.releaseDateStart);
+          console.log(parseInt(new Date(movie.release_date).getTime()) > parseInt(new Date(userSelection.releaseDateEnd).getTime()))
+          return movie;
         }
-        fetchMovie();
+        else
+          return null;
+      });
 
-    }, []);
+      const currentState = {...state};
+      currentState.userSelection = filteredMovies;
 
+      setState(currentState);
+    }
+  };
 
     return (
-        <div>
-            <Header baseUrl={window.location.pathname}/>
-            <div className='homeBar'>
-                <p className='homeBar_text'>Upcoming Movies</p>
-            </div>
-            <div className='movieGrids'>
-                {startMovies.length !== 0 ? <SingleLineGridList data={startMovies}/> :
-                    <CircularProgress color="secondary"/>}
-            </div>
-            <MovieReleasesProvider>
-                <MovieReleases/>
-            </MovieReleasesProvider>
-        </div>);
-}
+      <div>
+        <Header />
+        <span className="heading">Upcoming Movies</span>
+        <UpcomingMoviesList moviesData={state.data} />
+
+        <div className="flex-container">
+          <div className="left">
+            <ReleasedMoviesList moviesData={state.userSelection} />
+          </div>
+          <div className="right">
+            <FormCard
+              genres={state.genres}
+              artists={state.artists}
+              filterHandler={filterHandler}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
 export default Home;
